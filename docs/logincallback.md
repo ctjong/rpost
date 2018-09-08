@@ -1,1 +1,0 @@
-Login successful. You can close this tab now.
