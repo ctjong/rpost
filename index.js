@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-
+// Entry point
 function main()
 {
     try
@@ -21,8 +21,10 @@ function main()
     }
 }
 
+// Get arguments from stdin and from environment variables
 function getArguments(argMap)
 {
+    // Get arguments from stdin
     const [, , ...args] = process.argv;
     const argData = {};
     let temp = null;
@@ -38,9 +40,20 @@ function getArguments(argMap)
             temp = argMap[arg]
         }
     });
+
+    // For each required argument that is not specified in stdin,
+    // check if it is set as environment variable
+    Object.keys(argMap).forEach(opt => 
+    {
+        const argName = argMap[opt];
+        if (Object.keys(argData).indexOf(argName) < 0 && !!process.env[argName])
+            argData[argName] = process.env[argName];
+    });
+
     return argData;
 }
 
+// Prompt for arguments that haven't been specified in stdin
 function askForMissingInputAsync(argMap, argData)
 {
     return new Promise(resolve =>
@@ -49,14 +62,7 @@ function askForMissingInputAsync(argMap, argData)
         const isIncomplete = Object.keys(argMap).some(opt => 
         {
             argName = argMap[opt];
-            if (Object.keys(argData).indexOf(argName) >= 0)
-                return false;
-            if (!!process.env[argName])
-            {
-                argData[argName] = process.env[argName];
-                return false;
-            }
-            return true;
+            return (Object.keys(argData).indexOf(argName) < 0)
         });
         if (!isIncomplete)
         {
@@ -78,6 +84,7 @@ function askForMissingInputAsync(argMap, argData)
     });
 }
 
+// Retrieve access token
 function getAccessTokenAsync(argData)
 {
     return new Promise(resolve =>
