@@ -64,12 +64,15 @@ function askForMissingInputAsync(argMap, argData)
             return;
         }
 
-        const readline = require("readline");
-        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-        rl.question(`Please enter the value for ${argName}: `, answer =>
+        const input = require("read");
+        const options =
         {
-            argData[argName] = answer;
-            rl.close();
+            "prompt": `Please enter the value for ${argName}: `,
+            "silent": argName === "password"
+        };
+        input(options, (error, result, isDefault) =>
+        {
+            argData[argName] = result;
             askForMissingInputAsync(argMap, argData).then(resolve);
         });
     });
@@ -83,7 +86,7 @@ function getAccessTokenAsync(argData)
         request.post(
             {
                 url: 'https://www.reddit.com/api/v1/access_token',
-                auth: 
+                auth:
                 {
                     "username": argData["clientId"],
                     "password": argData["clientSecret"]
