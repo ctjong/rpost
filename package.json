@@ -1,6 +1,6 @@
 {
   "name": "multisubposter-cli",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A CLI that helps you to submit links to multiple subreddits",
   "main": "index.js",
   "bin": {
@@ -17,7 +17,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ctjong/multisubposter"
+    "url": "https://github.com/ctjong/multisubposter-cli"
   },
   "dependencies": {
     "read": "^1.0.7",
