@@ -1,11 +1,18 @@
 {
   "name": "multisubposter-cli",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A CLI that helps you to submit links to multiple subreddits",
   "main": "index.js",
   "bin": {
     "multisubposter-cli": "./index.js"
   },
+  "keywords": [
+    "cli",
+    "subreddit",
+    "reddit",
+    "api",
+    "post"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
