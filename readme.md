@@ -1,5 +1,7 @@
 # MultiSubPoster CLI
 
+[![npm](https://img.shields.io/npm/dt/multisubposter-cli.svg)](https://www.npmjs.com/package/multisubposter-cli) [![npm](https://img.shields.io/npm/v/multisubposter-cli.svg)](https://www.npmjs.com/package/multisubposter-cli) [![David](https://img.shields.io/david/ctjong/multisubposter-cli.svg)](https://www.npmjs.com/package/multisubposter-cli)
+
 A CLI that helps you to submit a post to multiple subreddits. The script will automatically wait between submissions to conform with Reddit rules (so you don't have to manually wait, just run the script and that's it).
 
 ## Installation
