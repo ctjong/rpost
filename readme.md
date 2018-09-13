@@ -1,13 +1,13 @@
-# MultiSubPoster CLI
+# rpost
 
-[![npm](https://img.shields.io/npm/dt/multisubposter-cli.svg)](https://www.npmjs.com/package/multisubposter-cli) [![npm](https://img.shields.io/npm/v/multisubposter-cli.svg)](https://www.npmjs.com/package/multisubposter-cli) [![David](https://img.shields.io/david/ctjong/multisubposter-cli.svg)](https://www.npmjs.com/package/multisubposter-cli)
+[![npm](https://img.shields.io/npm/dt/rpost.svg)](https://www.npmjs.com/package/rpost) [![npm](https://img.shields.io/npm/v/rpost.svg)](https://www.npmjs.com/package/rpost) [![David](https://img.shields.io/david/ctjong/rpost.svg)](https://www.npmjs.com/package/rpost)
 
-A CLI that helps you to submit a post to multiple subreddits. The script will automatically wait between submissions to conform with Reddit rules (so you don't have to manually wait, just run the script and that's it).
+A CLI that helps you to submit a reddit post to multiple subreddits. The script will automatically wait between submissions to conform with Reddit rules (so you don't have to manually wait, just run the script and that's it).
 
 ## Installation
 
 ```bash
-$ npm install -g multisubposter-cli
+$ npm install -g rpost
 ```
 
 ## Getting client ID and secret
@@ -25,27 +25,35 @@ Before running the script, you need to get a client ID and secret from your Redd
 5. Click create app
 6. Take a note of the client ID (below the app title) and the client secret. Make sure to keep them confidential.
 
+
 ## Running the script
 
 **Usage:**
 ```bash
-$ multisubposter-cli -u <username> -p <password> -ci <client_id> -cs <client_secret> -pt <post_title> -pu <post_url> -s <subreddits>
+$ rpost -u <username> -p <password> -ci <client_id> -cs <client_secret> -pt <post_title> -pu <post_url> -s <subreddits>
 ```
 
 **Arguments (all required):**
-- **-u username**: your Reddit username
-- **-p password**: your Reddit password
-- **-ci client_id**: client ID. See [Getting client ID and secret](#getting-client-id-and-secret) for more details.
-- **-cs client_secret**: client secret. See [Getting client ID and secret](#getting-client-id-and-secret) for more details.
-- **-pt post_title**: post title (wrapped in double quote if contains spaces).
-- **-pu post_url**: post URL (must be a valid URL).
+- **-u redditUserName**: your Reddit username
+- **-p redditPassword**: your Reddit password
+- **-ci clientId**: client ID. See [Getting client ID and secret](#getting-client-id-and-secret) for more details.
+- **-cs clientSecret**: client secret. See [Getting client ID and secret](#getting-client-id-and-secret) for more details.
+- **-pt postTitle**: post title (wrapped in double quote if contains spaces).
+- **-pu postUrl**: post URL (must be a valid URL).
 - **-s subreddits**: comma separated list of subreddits (without the r/ prefix).
 
 If you miss some of the arguments on the first invocation, don't worry, you will be prompted to fill them after you hit enter.
 
+**Environment variables**
+
+Alternatively, to avoid having to enter the arguments every time you run the program, you can also set the values as environment
+variables. The variable name should be "rpost_" plus the argument name specified in the above list.
+Example: rpost_redditUserName, rpost_redditPassword, etc.
+
+
 ## Links
 
-[Contributing](https://github.com/ctjong/multisubposter/tree/master/CONTRIBUTING.md)
+[Contributing](https://github.com/ctjong/rpost/tree/master/CONTRIBUTING.md)
 
-[License](https://github.com/ctjong/multisubposter/tree/master/LICENSE)
+[License](https://github.com/ctjong/rpost/tree/master/LICENSE)
 

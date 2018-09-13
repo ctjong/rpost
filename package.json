@@ -1,26 +1,27 @@
 {
-  "name": "multisubposter-cli",
-  "version": "1.0.4",
-  "description": "A CLI that helps you to submit links to multiple subreddits",
+  "name": "rpost",
+  "version": "1.0.1",
+  "description": "A CLI that helps you to submit a reddit post to multiple subreddits",
   "main": "index.js",
   "bin": {
-    "multisubposter-cli": "./index.js"
+    "rpost": "./index.js"
   },
   "keywords": [
     "cli",
     "subreddit",
     "reddit",
     "api",
+    "rpost",
     "post"
   ],
   "author": "Christopher Tjong",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ctjong/multisubposter-cli"
+    "url": "https://github.com/ctjong/rpost"
   },
   "dependencies": {
-    "read": "^1.0.7",
+    "readline-sync": "^1.4.9",
     "request": "^2.88.0"
   }
 }

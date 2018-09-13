@@ -2,12 +2,12 @@
 
 (function ()
 {
+    const readlineSync = require('readline-sync');
     const request = require("request");
-    const read = require("read");
 
     const ARGUMENT_OPTIONS =
     {
-        "-u": "userName", "-p": "password", "-ci": "clientId", "-cs": "clientSecret",
+        "-u": "redditUserName", "-p": "redditPassword", "-ci": "clientId", "-cs": "clientSecret",
         "-pt": "postTitle", "-pu": "postUrl", "-s": "subreddits"
     };
 
@@ -16,32 +16,55 @@
     {
         try
         {
-            const argData = getArguments(ARGUMENT_OPTIONS);
-            askForMissingArgsAsync(ARGUMENT_OPTIONS, argData).then(() =>
+            const [, , ...args] = process.argv;
+            if(args[0] === "-h" || args[0] === "--help")
             {
-                getAccessTokenAsync(argData).then(token =>
-                {
-                    submitPostsAsync(argData, token);
-                });
+                showUsage();
+                return;
+            }
+
+            const inputData = getInputData(ARGUMENT_OPTIONS);
+            askForMissingInputs(ARGUMENT_OPTIONS, inputData);
+            getAccessTokenAsync(inputData).then(token =>
+            {
+                submitPostsAsync(inputData, token);
             });
         }
         catch (e)
         {
             console.error(e);
+            process.exit(1);
         }
     }
 
-    // Get arguments from stdin
-    function getArguments(ARGUMENT_OPTIONS)
+    // Show the program usage
+    function showUsage()
     {
-        const [, , ...args] = process.argv;
-        const argData = {};
+        console.log("Usage:");
+        console.log("rpost [-u <redditUserName>] [-p <redditPassword>] [-ci <clientId>] [-cs <clientSecret>] [-pt <postTitle>] [-pu <postUrl>] [-s <subreddits>]");
+        console.log("-u redditUserName: your Reddit username");
+        console.log("-p redditPassword: your Reddit password");
+        console.log("-ci clientId: client ID. See Getting client ID and secret for more details.");
+        console.log("-cs clientSecret: client secret. See Getting client ID and secret for more details.");
+        console.log("-pt postTitle: post title (wrapped in double quote if contains spaces).");
+        console.log("-pu postUrl: post URL (must be a valid URL).");
+        console.log("-s subreddits: comma separated list of subreddits (without the r/ prefix)");
+        console.log("");
+        console.log("If you miss one of the command line arguments, don't worry, you will be prompted for it after you execute the program.");
+        console.log("Alternatively you can also set the values as environment variables to avoid having to enter it every time you execute the program. ");
+    }
+
+    // Get input data from command line arguments and environment variables
+    function getInputData(ARGUMENT_OPTIONS, args)
+    {
+        // Get from command line arguments
+        const inputData = {};
         let temp = null;
         args.forEach(arg =>
         {
             if (temp !== null)
             {
-                argData[temp] = arg;
+                inputData[temp] = arg;
                 temp = null;
             }
             else if (!!ARGUMENT_OPTIONS[arg])
@@ -50,36 +73,42 @@
             }
         });
 
-        return argData;
+        // Get from environment variables
+        Object.keys(ARGUMENT_OPTIONS).forEach(opt => 
+        {
+            const argName = ARGUMENT_OPTIONS[opt];
+            if (!inputData[argName])
+            {
+                const varName = `rpost_${argName}`;
+                if(process.env[varName])
+                    inputData[argName] = process.env[varName];
+            }
+        });
+
+        return inputData;
     }
 
-    // Ask for arguments that haven't been specified in stdin
-    function askForMissingArgsAsync(ARGUMENT_OPTIONS, argData)
+    // Ask for inputs that haven't been specified as command line arguments
+    function askForMissingInputs(ARGUMENT_OPTIONS, inputData)
     {
         const missingArgs = [];
         Object.keys(ARGUMENT_OPTIONS).forEach(opt => 
         {
             const argName = ARGUMENT_OPTIONS[opt];
-            if (!argData[argName])
+            if (!inputData[argName])
                 missingArgs.push(argName);
         });
-        return chainPromise(missingArgs, (missingArg, resolve) =>
+        missingArgs.forEach(missingArg =>
         {
-            const options =
-            {
-                "prompt": `Please enter the value for ${missingArg}: `,
-                "silent": missingArg === "password"
-            };
-            read(options, (error, result, isDefault) =>
-            {
-                argData[missingArg] = result;
-                resolve();
-            });
+            inputData[missingArg] = readlineSync.question(
+                `Please enter the value for ${missingArg}: `,
+                { hideEchoBack: missingArg === "redditPassword" }
+            );
         });
     }
 
     // Retrieve access token
-    function getAccessTokenAsync(argData)
+    function getAccessTokenAsync(inputData)
     {
         return new Promise(resolve =>
         {
@@ -88,14 +117,14 @@
                     url: 'https://www.reddit.com/api/v1/access_token',
                     auth:
                     {
-                        "username": argData["clientId"],
-                        "password": argData["clientSecret"]
+                        "username": inputData["clientId"],
+                        "password": inputData["clientSecret"]
                     },
                     formData:
                     {
                         "grant_type": "password",
-                        "username": argData["userName"],
-                        "password": argData["password"]
+                        "username": inputData["redditUserName"],
+                        "password": inputData["redditPassword"]
                     },
                     headers:
                     {
@@ -111,13 +140,13 @@
     }
 
     // Submit multiple subreddit posts
-    function submitPostsAsync(argData, token)
+    function submitPostsAsync(inputData, token)
     {
         const posts = [];
-        const subreddits = argData["subreddits"].split(",");
+        const subreddits = inputData["subreddits"].split(",");
         subreddits.forEach(subreddit =>
         {
-            posts.push(new Post(subreddit, argData["postTitle"], argData["postUrl"]));
+            posts.push(new Post(subreddit, inputData["postTitle"], inputData["postUrl"]));
         });
         return chainPromise(posts, (post, resolve) =>
         {
