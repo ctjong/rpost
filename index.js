@@ -23,7 +23,7 @@
                 return;
             }
 
-            const inputData = getInputData(ARGUMENT_OPTIONS);
+            const inputData = getInputData(ARGUMENT_OPTIONS, args);
             askForMissingInputs(ARGUMENT_OPTIONS, inputData);
             getAccessTokenAsync(inputData).then(token =>
             {
