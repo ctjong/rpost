@@ -30,7 +30,7 @@ Before running the script, you need to get a client ID and secret from your Redd
 
 **Usage:**
 ```bash
-$ rpost -u <username> -p <password> -ci <client_id> -cs <client_secret> -pt <post_title> -pu <post_url> -s <subreddits>
+$ rpost [-u <redditUserName>] [-p <redditPassword>] [-ci <clientId>] [-cs <clientSecret>] [-t <type>] [-pt <postTitle>] [-px <postText>] [-pu <postUrl>] [-s <subreddits>]
 ```
 
 **Arguments (all required):**
@@ -38,8 +38,10 @@ $ rpost -u <username> -p <password> -ci <client_id> -cs <client_secret> -pt <pos
 - **-p redditPassword**: your Reddit password
 - **-ci clientId**: client ID. See [Getting client ID and secret](#getting-client-id-and-secret) for more details.
 - **-cs clientSecret**: client secret. See [Getting client ID and secret](#getting-client-id-and-secret) for more details.
-- **-pt postTitle**: post title (wrapped in double quote if contains spaces).
-- **-pu postUrl**: post URL (must be a valid URL).
+- **-t type**: post type (link/text).
+- **-pt postTitle**: post title.
+- **-px postText**: post text. Required only if post type is text.
+- **-pu postUrl**: post URL. Required only if post type is link.
 - **-s subreddits**: comma separated list of subreddits (without the r/ prefix).
 
 If you miss some of the arguments on the first invocation, don't worry, you will be prompted to fill them after you hit enter.

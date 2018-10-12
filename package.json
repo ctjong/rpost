@@ -1,6 +1,6 @@
 {
   "name": "rpost",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A CLI that helps you to submit a reddit post to multiple subreddits",
   "main": "index.js",
   "bin": {

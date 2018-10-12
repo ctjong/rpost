@@ -7,8 +7,15 @@
 
     const ARGUMENT_OPTIONS =
     {
-        "-u": "redditUserName", "-p": "redditPassword", "-ci": "clientId", "-cs": "clientSecret",
-        "-pt": "postTitle", "-pu": "postUrl", "-s": "subreddits"
+        "-u": { name: "redditUserName", prompt: "Please enter your reddit user name", isSecret: false },
+        "-p": { name: "redditPassword", prompt: "Please enter your reddit password", isSecret: true },
+        "-ci": { name: "clientId", prompt: "Please enter your reddit client ID from https://www.reddit.com/prefs/apps", isSecret: false },
+        "-cs": { name: "clientSecret", prompt: "Please enter your reddit client secret from https://www.reddit.com/prefs/apps", isSecret: false },
+        "-t": { name: "type", prompt: "Please enter the post type (text/link)", isSecret: false },
+        "-pt": { name: "postTitle", prompt: "Please enter the post title", isSecret: false },
+        "-px": { name: "postText", prompt: "Please enter the post text (leave empty for link-type post)", isSecret: false },
+        "-pu": { name: "postUrl", prompt: "Please enter the post URL (leave empty for text-type post)", isSecret: false },
+        "-s": { name: "subreddits", prompt: "Please enter a comma-separated list of subreddits you want to post to", isSecret: false },
     };
 
     // Entry point
@@ -23,10 +30,16 @@
                 return;
             }
 
-            const inputData = getInputData(ARGUMENT_OPTIONS, args);
-            askForMissingInputs(ARGUMENT_OPTIONS, inputData);
+            const inputData = getInputData(args);
+            askForMissingInputs(inputData);
             const token = await getAccessTokenAsync(inputData);
-            await submitPostsAsync(inputData, token);
+
+            const subreddits = inputData["subreddits"].split(",");
+            subreddits.forEach(async (subreddit) =>
+            {
+                const post = new Post(subreddit, inputData["type"], inputData["postTitle"], inputData["postText"], inputData["postUrl"]);
+                await waitAndSubmitPostAsync(post, 0, token);
+            });
         }
         catch (e)
         {
@@ -35,51 +48,34 @@
         }
     }
 
-    // Show the program usage
-    function showUsage()
-    {
-        console.log("Usage:");
-        console.log("rpost [-u <redditUserName>] [-p <redditPassword>] [-ci <clientId>] [-cs <clientSecret>] [-pt <postTitle>] [-pu <postUrl>] [-s <subreddits>]");
-        console.log("-u redditUserName: your Reddit username");
-        console.log("-p redditPassword: your Reddit password");
-        console.log("-ci clientId: client ID. See Getting client ID and secret for more details.");
-        console.log("-cs clientSecret: client secret. See Getting client ID and secret for more details.");
-        console.log("-pt postTitle: post title (wrapped in double quote if contains spaces).");
-        console.log("-pu postUrl: post URL (must be a valid URL).");
-        console.log("-s subreddits: comma separated list of subreddits (without the r/ prefix)");
-        console.log("");
-        console.log("If you miss one of the command line arguments, don't worry, you will be prompted for it after you execute the program.");
-        console.log("Alternatively you can also set the values as environment variables to avoid having to enter it every time you execute the program. ");
-    }
-
     // Get input data from command line arguments and environment variables
-    function getInputData(ARGUMENT_OPTIONS, args)
+    function getInputData(args)
     {
         // Get from command line arguments
         const inputData = {};
-        let temp = null;
+        let lastArgumentname = null;
         args.forEach(arg =>
         {
-            if (temp !== null)
+            if (!!ARGUMENT_OPTIONS[arg])
             {
-                inputData[temp] = arg;
-                temp = null;
+                lastArgumentname = ARGUMENT_OPTIONS[arg].name;
             }
-            else if (!!ARGUMENT_OPTIONS[arg])
+            else if (lastArgumentname !== null)
             {
-                temp = ARGUMENT_OPTIONS[arg]
+                inputData[lastArgumentname] = arg;
+                lastArgumentname = null;
             }
         });
 
         // Get from environment variables
         Object.keys(ARGUMENT_OPTIONS).forEach(opt => 
         {
-            const argName = ARGUMENT_OPTIONS[opt];
+            const argName = ARGUMENT_OPTIONS[opt].name;
             if (!inputData[argName])
             {
-                const varName = `rpost_${argName}`;
-                if(process.env[varName])
-                    inputData[argName] = process.env[varName];
+                const envVarName = `rpost_${argName}`;
+                if(process.env[envVarName])
+                    inputData[argName] = process.env[envVarName];
             }
         });
 
@@ -87,20 +83,20 @@
     }
 
     // Ask for inputs that haven't been specified as command line arguments
-    function askForMissingInputs(ARGUMENT_OPTIONS, inputData)
+    function askForMissingInputs(inputData)
     {
         const missingArgs = [];
         Object.keys(ARGUMENT_OPTIONS).forEach(opt => 
         {
-            const argName = ARGUMENT_OPTIONS[opt];
-            if (!inputData[argName])
-                missingArgs.push(argName);
+            const arg = ARGUMENT_OPTIONS[opt];
+            if (!inputData[arg.name])
+                missingArgs.push(arg);
         });
         missingArgs.forEach(missingArg =>
         {
-            inputData[missingArg] = readlineSync.question(
-                `Please enter the value for ${missingArg}: `,
-                { hideEchoBack: missingArg === "redditPassword" }
+            inputData[missingArg.name] = readlineSync.question(
+                `${missingArg.prompt}: `,
+                { hideEchoBack: missingArg.isSecret }
             );
         });
     }
@@ -137,17 +133,6 @@
         });
     }
 
-    // Submit multiple subreddit posts
-    function submitPostsAsync(inputData, token)
-    {
-        const subreddits = inputData["subreddits"].split(",");
-        subreddits.forEach(subreddit =>
-        {
-            const post = new Post(subreddit, inputData["postTitle"], inputData["postUrl"]);
-            await waitAndSubmitPostAsync(post, 0, token);
-        });
-    }
-
     // Wait and submit a single subreddit post
     async function waitAndSubmitPostAsync(post, timeout, token)
     {
@@ -158,13 +143,30 @@
             setTimeout(() =>
             {
                 console.log(`Submitting to r/${post.target}`);
+
+                const data = { "api_type": "json", "sr": post.target, "title": post.title };
+                if(post.type === "text")
+                {
+                    data.kind = "self";
+                    data.text = post.text;
+                }
+                else if(post.type === "link")
+                {
+                    data.kind = "link";
+                    data.url = post.url;
+                }
+                else
+                {
+                    throw `Unrecognized type ${post.type}`;
+                }
+
                 request.post(
                     {
                         url: 'https://oauth.reddit.com/api/submit',
-                        form: { "api_type": "json", "kind": "link", "sr": post.target, "title": post.title, "url": post.url },
+                        form: data,
                         headers: { "User-Agent": "ChangeMeClient/0.1", "Authorization": `Bearer ${token}` }
                     },
-                    (e, r, body) =>
+                    async (e, r, body) =>
                     {
                         console.log(`Received response: ${body}`);
                         const parsed = JSON.parse(body);
@@ -189,13 +191,34 @@
         });
     }
 
+    // Show the program usage
+    function showUsage()
+    {
+        console.log("Usage:");
+        console.log("rpost [-u <redditUserName>] [-p <redditPassword>] [-ci <clientId>] [-cs <clientSecret>] [-t <type>] [-pt <postTitle>] [-px <postText>] [-pu <postUrl>] [-s <subreddits>]");
+        console.log("-u redditUserName: your Reddit username");
+        console.log("-p redditPassword: your Reddit password");
+        console.log("-ci clientId: client ID. See Getting client ID and secret for more details.");
+        console.log("-cs clientSecret: client secret. See Getting client ID and secret for more details.");
+        console.log("-t type: post type (link/text).");
+        console.log("-pt postTitle: post title.");
+        console.log("-px postText: post text. Required only if post type is text.");
+        console.log("-pu postUrl: post URL. Required only if post type is link.");
+        console.log("-s subreddits: comma separated list of subreddits (without the r/ prefix)");
+        console.log("");
+        console.log("If you miss one of the command line arguments, don't worry, you will be prompted for it after you execute the program.");
+        console.log("Alternatively you can also set the values as environment variables to avoid having to enter it every time you execute the program. ");
+    }
+
     // class representing a post object
     class Post
     {
-        constructor(target, title, url)
+        constructor(target, type, title, text, url)
         {
             this.target = target;
+            this.type = type;
             this.title = title;
+            this.text = text;
             this.url = url;
         }
     }
