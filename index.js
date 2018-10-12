@@ -12,7 +12,7 @@
     };
 
     // Entry point
-    function main()
+    async function main()
     {
         try
         {
@@ -25,10 +25,8 @@
 
             const inputData = getInputData(ARGUMENT_OPTIONS, args);
             askForMissingInputs(ARGUMENT_OPTIONS, inputData);
-            getAccessTokenAsync(inputData).then(token =>
-            {
-                submitPostsAsync(inputData, token);
-            });
+            const token = await getAccessTokenAsync(inputData);
+            await submitPostsAsync(inputData, token);
         }
         catch (e)
         {
@@ -142,20 +140,16 @@
     // Submit multiple subreddit posts
     function submitPostsAsync(inputData, token)
     {
-        const posts = [];
         const subreddits = inputData["subreddits"].split(",");
         subreddits.forEach(subreddit =>
         {
-            posts.push(new Post(subreddit, inputData["postTitle"], inputData["postUrl"]));
-        });
-        return chainPromise(posts, (post, resolve) =>
-        {
-            waitAndSubmitPostAsync(post, 0, token).then(resolve);
+            const post = new Post(subreddit, inputData["postTitle"], inputData["postUrl"]);
+            await waitAndSubmitPostAsync(post, 0, token);
         });
     }
 
-    // Wait and then submit a single subreddit post
-    function waitAndSubmitPostAsync(post, timeout, token)
+    // Wait and submit a single subreddit post
+    async function waitAndSubmitPostAsync(post, timeout, token)
     {
         return new Promise(resolve =>
         {
@@ -183,7 +177,7 @@
                         {
                             // Submitted too early. Wait for the remaining timeout and retry.
                             const remaining = Math.ceil(parsed.json.ratelimit * 1000);
-                            waitAndSubmitPostAsync(post, remaining, token).then(resolve);
+                            await waitAndSubmitPostAsync(post, remaining, token);
                         }
                         else 
                         {
@@ -192,28 +186,6 @@
                         }
                     });
             }, timeout);
-        });
-    }
-
-    // Execute an async function against each item in an argument array, one after the other,
-    // by chaining the function promises.
-    function chainPromise(args, asyncFunction)
-    {
-        return new Promise(finalResolve => 
-        {
-            let currentPromise = null;
-            args.forEach(arg => 
-            {
-                const promiseFunction = resolve => asyncFunction(arg, resolve);
-                if (currentPromise)
-                    currentPromise = currentPromise.then(() => new Promise(promiseFunction));
-                else
-                    currentPromise = new Promise(promiseFunction);
-            });
-            if (currentPromise)
-                currentPromise.then(finalResolve);
-            else
-                finalResolve();
         });
     }
 
