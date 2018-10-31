@@ -19,7 +19,7 @@
     };
 
     // Entry point
-    async function main()
+    async function runAsync()
     {
         try
         {
@@ -134,7 +134,7 @@
     }
 
     // Wait and submit a single subreddit post
-    async function waitAndSubmitPostAsync(post, timeout, token)
+    function waitAndSubmitPostAsync(post, timeout, token)
     {
         return new Promise(resolve =>
         {
@@ -223,5 +223,5 @@
         }
     }
 
-    main();
+    runAsync();
 })();
